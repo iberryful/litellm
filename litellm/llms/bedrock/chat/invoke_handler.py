@@ -246,10 +246,11 @@ async def make_call(
                 response.aiter_bytes(chunk_size=1024)
             )
         else:
-            decoder = AWSEventStreamDecoder(model=model)
-            completion_stream = decoder.aiter_bytes(
-                response.aiter_bytes(chunk_size=1024)
-            )
+            if response.headers.get('content-type') == 'text/event-stream':
+                decoder = AWSTextEventStreamDecoder(model=model)
+            else:
+                decoder = AWSEventStreamDecoder(model=model)
+            completion_stream = decoder.aiter_bytes(response.aiter_bytes(chunk_size=1024))
 
         # LOGGING
         logging_obj.post_call(
@@ -1701,8 +1702,8 @@ class AWSTextEventStreamDecoder(AWSEventStreamDecoder):
     
     def _parse_chunk(self, chunk: bytes) -> (GenericStreamingChunk | ModelResponseStream):
         self.buffer += self.decoder.decode(chunk)
-        while "\n\n" in buffer:
-            message, self.buffer = buffer.split("\n\n", 1)
+        while "\n\n" in self.buffer:
+            message, self.buffer = self.buffer.split("\n\n", 1)
             message = message.lstrip("data: ")
             parsed_data = ast.literal_eval(message)
             if not parsed_data:
