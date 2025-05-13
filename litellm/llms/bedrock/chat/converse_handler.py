@@ -17,7 +17,7 @@ from litellm.utils import CustomStreamWrapper
 
 from ..base_aws_llm import BaseAWSLLM, Credentials
 from ..common_utils import BedrockError
-from .invoke_handler import AWSEventStreamDecoder, MockResponseIterator, make_call
+from .invoke_handler import AWSEventStreamDecoder, AWSTextEventStreamDecoder, MockResponseIterator, make_call
 
 
 def make_sync_call(
@@ -66,6 +66,12 @@ def make_sync_call(
             model_response=model_response, json_mode=json_mode
         )
     else:
+        if response.headers.get('content-type') == 'text/event-stream':
+            decoder = AWSTextEventStreamDecoder(model=model)
+            completion_stream = decoder.iter_bytes(response.iter_bytes(chunk_size=1024))
+        else:
+            decoder = AWSEventStreamDecoder(model=model)
+            completion_stream = decoder.iter_bytes(response.iter_bytes(chunk_size=1024))
         decoder = AWSEventStreamDecoder(model=model)
         completion_stream = decoder.iter_bytes(response.iter_bytes(chunk_size=1024))
 

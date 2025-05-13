@@ -21,6 +21,8 @@ from typing import (
     cast,
     get_args,
 )
+import ast
+import codecs
 
 import httpx  # type: ignore
 
@@ -1682,3 +1684,57 @@ class MockResponseIterator:  # for returning ai21 streaming responses
             raise StopAsyncIteration
         self.is_done = True
         return self._chunk_parser(self.model_response)
+
+class AWSTextEventStreamDecoder(AWSEventStreamDecoder):
+    def __init__(
+        self,
+        model: str,
+    ) -> None:
+        """
+        Child class of AWSEventStreamDecoder that handles the streaming response from the text family of models
+
+        The only difference between AWSEventStreamDecoder and AmazonAnthropicClaudeStreamDecoder is the `chunk_parser` method
+        """
+        super().__init__(model=model)
+        self.buffer = ""
+        self.decoder = codecs.getincrementaldecoder("utf-8")()
+    
+    def _parse_chunk(self, chunk: bytes) -> (GenericStreamingChunk | ModelResponseStream):
+        self.buffer += self.decoder.decode(chunk)
+        while "\n\n" in buffer:
+            message, self.buffer = buffer.split("\n\n", 1)
+            message = message.lstrip("data: ")
+            parsed_data = ast.literal_eval(message)
+            if not parsed_data:
+                continue
+            output = None
+            if 'messageStart' in parsed_data:
+                continue
+            if 'messageStop' in parsed_data:
+                output = parsed_data['messageStop']
+            elif 'metadata' in parsed_data:
+                output = parsed_data['metadata']
+            else: 
+                output = parsed_data
+            if output:
+                yield self._chunk_parser(chunk_data=output)     
+
+    def iter_bytes(
+        self, iterator: Iterator[bytes]
+    ) -> Iterator[Union[GChunk, ModelResponseStream]]:
+        """Given an iterator that yields lines, iterate over it & yield every event encountered"""
+
+        for chunk in iterator:
+            for parsed_chunk in self._parse_chunk(chunk):
+                yield parsed_chunk
+
+
+
+    async def aiter_bytes(
+        self, iterator: AsyncIterator[bytes]
+    ) -> AsyncIterator[Union[GChunk, ModelResponseStream]]:
+        """Given an async iterator that yields lines, iterate over it & yield every event encountered"""
+
+        async for chunk in iterator:
+            for parsed_chunk in self._parse_chunk(chunk):
+                yield parsed_chunk
