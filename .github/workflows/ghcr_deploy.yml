@@ -56,6 +56,7 @@ jobs:
           context: .
           push: true
           tags: litellm/litellm:${{ github.event.inputs.tag || 'latest' }} 
+          platforms: local,linux/amd64,linux/arm64,linux/arm64/v8
       -
         name: Build and push litellm-database image
         uses: docker/build-push-action@v5
@@ -64,6 +65,7 @@ jobs:
           push: true
           file: ./docker/Dockerfile.database
           tags: litellm/litellm-database:${{ github.event.inputs.tag || 'latest' }}
+          platforms: local,linux/amd64,linux/arm64,linux/arm64/v8
       -
         name: Build and push litellm-spend-logs image
         uses: docker/build-push-action@v5
@@ -72,6 +74,7 @@ jobs:
           push: true
           file: ./litellm-js/spend-logs/Dockerfile
           tags: litellm/litellm-spend_logs:${{ github.event.inputs.tag || 'latest' }}
+          platforms: local,linux/amd64,linux/arm64,linux/arm64/v8
       
   build-and-push-image:
     runs-on: ubuntu-latest
