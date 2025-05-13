@@ -30,7 +30,6 @@ jobs:
           echo "Tag: ${{ github.event.inputs.tag }}"
           echo "Release type: ${{ github.event.inputs.release_type }}"
   docker-hub-deploy:
-    if: github.repository == 'BerriAI/litellm'
     runs-on: ubuntu-latest
     steps:
       -
