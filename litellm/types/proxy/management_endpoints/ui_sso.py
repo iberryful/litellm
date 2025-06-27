@@ -1,4 +1,4 @@
-from typing import List, Literal, Optional, TypedDict
+from typing import List, Literal, Optional, TypedDict, Union
 
 from pydantic import Field
 
@@ -29,6 +29,82 @@ class MicrosoftServicePrincipalTeam(TypedDict, total=False):
 
     principalDisplayName: Optional[str]
     principalId: Optional[str]
+
+
+class AccessControl_UI_AccessMode(LiteLLMPydanticObjectBase):
+    """Model for Controlling UI Access Mode via SSO Groups"""
+
+    type: Literal["restricted_sso_group"]
+    restricted_sso_group: str
+    sso_group_jwt_field: str
+
+
+class SSOConfig(LiteLLMPydanticObjectBase):
+    """
+    Configuration for SSO environment variables and settings
+    """
+
+    # Google SSO
+    google_client_id: Optional[str] = Field(
+        default=None,
+        description="Google OAuth Client ID for SSO authentication",
+    )
+    google_client_secret: Optional[str] = Field(
+        default=None,
+        description="Google OAuth Client Secret for SSO authentication",
+    )
+
+    # Microsoft SSO
+    microsoft_client_id: Optional[str] = Field(
+        default=None,
+        description="Microsoft OAuth Client ID for SSO authentication",
+    )
+    microsoft_client_secret: Optional[str] = Field(
+        default=None,
+        description="Microsoft OAuth Client Secret for SSO authentication",
+    )
+    microsoft_tenant: Optional[str] = Field(
+        default=None,
+        description="Microsoft Azure Tenant ID for SSO authentication",
+    )
+
+    # Generic/Okta SSO
+    generic_client_id: Optional[str] = Field(
+        default=None,
+        description="Generic OAuth Client ID for SSO authentication (used for Okta and other providers)",
+    )
+    generic_client_secret: Optional[str] = Field(
+        default=None,
+        description="Generic OAuth Client Secret for SSO authentication",
+    )
+    generic_authorization_endpoint: Optional[str] = Field(
+        default=None,
+        description="Authorization endpoint URL for generic OAuth provider",
+    )
+    generic_token_endpoint: Optional[str] = Field(
+        default=None,
+        description="Token endpoint URL for generic OAuth provider",
+    )
+    generic_userinfo_endpoint: Optional[str] = Field(
+        default=None,
+        description="User info endpoint URL for generic OAuth provider",
+    )
+
+    # Common settings
+    proxy_base_url: Optional[str] = Field(
+        default=None,
+        description="Base URL of the proxy server for SSO redirects",
+    )
+    user_email: Optional[str] = Field(
+        default=None,
+        description="Email of the proxy admin user",
+    )
+
+    # Access Mode
+    ui_access_mode: Optional[Union[AccessControl_UI_AccessMode, str]] = Field(
+        default=None,
+        description="Access mode for the UI",
+    )
 
 
 class DefaultTeamSSOParams(LiteLLMPydanticObjectBase):

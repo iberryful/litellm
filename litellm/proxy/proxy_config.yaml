@@ -1,10 +1,20 @@
 model_list:
-  - model_name: openai/gpt-4o
+  - model_name: azure_ai/*
     litellm_params:
-      model: openai/gpt-4o
-      api_key: os.environ/OPENAI_API_KEY
+      model: azure_ai/*
 
+
+mcp_servers:
+  deepwiki_mcp:
+    url: "https://mcp.deepwiki.com/mcp"
+    transport: "http"
+
+general_settings:
+  store_model_in_db: true
+  store_prompts_in_spend_logs: true
 
 litellm_settings:
-    callbacks: ["smtp_email"]
-  
+  callbacks: ["langfuse", "datadog"]
+  cache: True
+  cache_params:        # set cache params for redis
+    type: redis
